@@ -1,17 +1,18 @@
 {
   "compilerOptions": {
     "composite": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "outDir": "./out",
+    "outDir": "./out/node",
     "rootDir": "./src",
     "strict": true,
+    "declaration": true,
     "target": "ESNext",
     "lib": ["ESNext"],
     "resolveJsonModule": true,
     "skipLibCheck": true
   },
-  "include": ["src/main/**/*", "src/preload/**/*", "src/shared/**/*", "electron.vite.config.ts"]
+  "include": ["src/main/**/*", "src/preload/**/*", "src/shared/**/*"]
 }
