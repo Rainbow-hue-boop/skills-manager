@@ -9,7 +9,7 @@ let server: http.Server | null = null
 let onOpenCallback: ((projectPath: string) => void) | null = null
 
 export function startIpcServer(): number {
-  if (server) return (server.address() as any).port
+  if (server) return (server.address() as any)?.port || 0
 
   const managerDir = path.join(os.homedir(), '.skills-manager')
   fs.mkdirSync(managerDir, { recursive: true })
@@ -32,7 +32,7 @@ export function startIpcServer(): number {
     fs.writeFileSync(PORT_FILE, port.toString(), 'utf-8')
   })
 
-  return (server.address() as any).port
+  return (server.address() as any)?.port || 0
 }
 
 export function onOpen(callback: (projectPath: string) => void): void {

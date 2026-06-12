@@ -32,8 +32,9 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  createWindow()
+  registerIpcHandlers()
   startIpcServer()
+  createWindow()
 
   onOpen((projectPath: string) => {
     cliProjectPath = projectPath
