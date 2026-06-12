@@ -44,8 +44,6 @@ app.whenReady().then(() => {
       mainWindow.webContents.send('open-from-cli', projectPath)
     }
   })
-
-  registerIpcHandlers()
 })
 
 app.on('window-all-closed', () => {
