@@ -25,10 +25,14 @@ export default function GroupList() {
   }
 
   async function handleSelectFolder() {
-    const paths = await window.skillsApi.selectFolder()
-    if (paths && paths.length > 0) {
-      setSelectedFolders(paths)
-      setShowAdd(true)
+    try {
+      const paths = await window.skillsApi.selectFolder()
+      if (paths && paths.length > 0) {
+        setSelectedFolders(paths)
+        setShowAdd(true)
+      }
+    } catch (err) {
+      console.error('selectFolder failed:', err)
     }
   }
 
