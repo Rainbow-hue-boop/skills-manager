@@ -15,7 +15,9 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
 mac:
-  target: dmg
+  target:
+    - target: dmg
+      arch: [arm64]
   extendInfo:
     LSEnvironment:
-      PATH: /usr/local/bin:/usr/bin:/bin
+      PATH: /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin
