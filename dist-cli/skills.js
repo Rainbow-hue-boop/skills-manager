@@ -10,6 +10,7 @@ const path_1 = __importDefault(require("path"));
 const os_1 = __importDefault(require("os"));
 const child_process_1 = require("child_process");
 const PORT_FILE = path_1.default.join(os_1.default.homedir(), '.skills-manager', '.ipc-port');
+const PENDING_PATH_FILE = path_1.default.join(os_1.default.homedir(), '.skills-manager', '.pending-path');
 const cwd = process.cwd();
 function getStoredPort() {
     try {
@@ -41,6 +42,10 @@ function sendOpenRequest(port) {
     });
 }
 function launchElectron() {
+    // Write pending path BEFORE launching, so Electron can read it on startup
+    const dir = path_1.default.join(os_1.default.homedir(), '.skills-manager');
+    fs_1.default.mkdirSync(dir, { recursive: true });
+    fs_1.default.writeFileSync(PENDING_PATH_FILE, cwd, 'utf-8');
     const possiblePaths = [
         path_1.default.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
         path_1.default.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron'),

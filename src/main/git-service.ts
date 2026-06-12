@@ -66,7 +66,11 @@ export function gitPull(dir: string): string {
 }
 
 export function gitPush(dir: string): string {
-  return git(['push', 'origin'], dir)
+  try {
+    return git(['push', '-u', 'origin', 'HEAD'], dir)
+  } catch {
+    return git(['push', 'origin', 'HEAD'], dir)
+  }
 }
 
 export function gitAddAll(dir: string): void {

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import SkillCard from '../components/SkillCard'
+import TagPill from '../components/TagPill'
 import { InstallResult } from '../../shared/types'
 
 interface SkillInfo { name: string; hash: string; source: string }
@@ -15,12 +16,40 @@ export default function GroupDetail({ cliPath }: GroupDetailProps) {
   const [results, setResults] = useState<InstallResult[]>([])
   const [installing, setInstalling] = useState(false)
   const [toast, setToast] = useState<{ title: string; body: string } | null>(null)
+  const [tags, setTags] = useState<string[]>([])
+  const [newTag, setNewTag] = useState('')
 
   useEffect(() => {
-    if (groupName) window.skillsApi.getGroupSkills(groupName).then(setSkills)
+    if (groupName) {
+      window.skillsApi.getGroupSkills(groupName).then(setSkills)
+      window.skillsApi.getGroupTags(groupName).then(setTags)
+    }
   }, [groupName])
 
   useEffect(() => { setProjectPath(cliPath) }, [cliPath])
+
+  async function addTag() {
+    if (!newTag.trim() || !groupName) return
+    try {
+      const updated = [...tags, newTag.trim()]
+      await window.skillsApi.saveGroupTags(groupName, updated)
+      setTags(updated)
+      setNewTag('')
+    } catch (err) {
+      console.error('saveGroupTags failed:', err)
+    }
+  }
+
+  async function removeTag(tag: string) {
+    if (!groupName) return
+    try {
+      const updated = tags.filter(t => t !== tag)
+      await window.skillsApi.saveGroupTags(groupName, updated)
+      setTags(updated)
+    } catch (err) {
+      console.error('saveGroupTags failed:', err)
+    }
+  }
 
   const toggleSkill = (name: string) => {
     setSelected(prev => { const next = new Set(prev); next.has(name) ? next.delete(name) : next.add(name); return next })
@@ -52,6 +81,26 @@ export default function GroupDetail({ cliPath }: GroupDetailProps) {
         <div>
           <h1 className="page-title">{groupName}</h1>
           <p className="page-subtitle">{skills.length} 个技能</p>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: 16, padding: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>标签：</span>
+          <div className="tag-pills">
+            {tags.map(t => (
+              <TagPill key={t} label={t} onRemove={() => removeTag(t)} />
+            ))}
+          </div>
+          <input
+            className="input"
+            value={newTag}
+            onChange={e => setNewTag(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addTag()}
+            placeholder="新标签..."
+            style={{ width: 100, padding: '3px 8px', fontSize: 11 }}
+          />
+          <button className="btn btn-secondary" onClick={addTag} style={{ padding: '3px 10px', fontSize: 11 }}>+</button>
         </div>
       </div>
 

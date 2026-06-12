@@ -6,6 +6,7 @@ import os from 'os'
 import { execSync } from 'child_process'
 
 const PORT_FILE = path.join(os.homedir(), '.skills-manager', '.ipc-port')
+const PENDING_PATH_FILE = path.join(os.homedir(), '.skills-manager', '.pending-path')
 const cwd = process.cwd()
 
 function getStoredPort(): number | null {
@@ -38,6 +39,11 @@ function sendOpenRequest(port: number): Promise<boolean> {
 }
 
 function launchElectron(): void {
+  // Write pending path BEFORE launching, so Electron can read it on startup
+  const dir = path.join(os.homedir(), '.skills-manager')
+  fs.mkdirSync(dir, { recursive: true })
+  fs.writeFileSync(PENDING_PATH_FILE, cwd, 'utf-8')
+
   const possiblePaths = [
     path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
     path.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron'),

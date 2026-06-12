@@ -21,7 +21,9 @@ const api = {
     ipcRenderer.on('install-progress', (_event, data) => callback(data))
   },
   getManagerPath: () => ipcRenderer.invoke('get-manager-path'),
-  selectFolder: () => ipcRenderer.invoke('select-folder')
+  selectFolder: () => ipcRenderer.invoke('select-folder'),
+  getGroupTags: (groupName: string) => ipcRenderer.invoke('get-group-tags', groupName),
+  saveGroupTags: (groupName: string, tags: string[]) => ipcRenderer.invoke('save-group-tags', groupName, tags)
 }
 
 contextBridge.exposeInMainWorld('skillsApi', api)

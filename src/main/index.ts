@@ -1,7 +1,8 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import path from 'path'
+import { execSync } from 'child_process'
 import { startIpcServer, onOpen, stopIpcServer } from './ipc-server'
-import { scanGroups, getSkillManagerDir, installSkills, readLockFile } from './skill-manager'
+import { scanGroups, getSkillManagerDir, installSkills, readLockFile, writeLockFile } from './skill-manager'
 import { getStatus, gitPull, gitPush, gitAddAll, gitCommit, gitLog, isGitRepo, gitInit, setRemote } from './git-service'
 import fs from 'fs'
 import os from 'os'
@@ -32,6 +33,13 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  // Read pending CLI path (written by skills CLI before launch)
+  const pendingFile = path.join(os.homedir(), '.skills-manager', '.pending-path')
+  try {
+    cliProjectPath = fs.readFileSync(pendingFile, 'utf-8').trim()
+    fs.unlinkSync(pendingFile)
+  } catch { /* no pending path */ }
+
   registerIpcHandlers()
   startIpcServer()
   createWindow()
@@ -105,10 +113,50 @@ function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('git-sync', async () => {
-    gitAddAll(managerDir)
-    try { gitCommit(managerDir, 'sync: auto commit') } catch { /* nothing to commit */ }
-    try { gitPull(managerDir) } catch (e: any) { return { success: false, error: e.message } }
-    try { gitPush(managerDir) } catch (e: any) { return { success: false, error: e.message } }
+    try {
+      const branch = (() => {
+        try {
+          return execSync('git rev-parse --abbrev-ref HEAD', { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' }).trim()
+        } catch { return 'master' }
+      })()
+
+      gitAddAll(managerDir)
+
+      // Always commit (allow-empty for first sync)
+      try { gitCommit(managerDir, 'sync') } catch {
+        execSync(`git commit --allow-empty -m "init: skills sync"`, {
+          cwd: managerDir, encoding: 'utf-8', stdio: 'pipe'
+        })
+      }
+
+      // Pull
+      try {
+        execSync(`git pull origin ${branch} --allow-unrelated-histories`, {
+          cwd: managerDir, encoding: 'utf-8', stdio: 'pipe'
+        })
+      } catch { /* empty remote ok */ }
+
+      // Push
+      execSync(`git push -u origin ${branch}`, { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' })
+      return { success: true }
+    } catch (e: any) {
+      const msg = (e.stderr || e.message || String(e)).toString().slice(0, 500)
+      return { success: false, error: msg }
+    }
+  })
+
+  ipcMain.handle('get-group-tags', (_event, groupName: string) => {
+    const lock = readLockFile(managerDir)
+    return lock?.groups[groupName]?.tags || []
+  })
+
+  ipcMain.handle('save-group-tags', (_event, groupName: string, tags: string[]) => {
+    const lock = readLockFile(managerDir) || { version: 1, groups: {}, skills: {} }
+    if (!lock.groups[groupName]) {
+      lock.groups[groupName] = { source: '', sourceType: 'github', installedAt: new Date().toISOString(), tags: [] }
+    }
+    lock.groups[groupName].tags = tags
+    writeLockFile(managerDir, lock)
     return { success: true }
   })
 
@@ -143,9 +191,42 @@ function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('add-group', (_event, sourcePath: string, groupName: string) => {
-    const targetPath = path.join(managerDir, groupName)
-    fs.cpSync(sourcePath, targetPath, { recursive: true })
-    return { success: true }
+    try {
+      const targetDir = path.join(managerDir, groupName)
+      fs.mkdirSync(targetDir, { recursive: true })
+
+      // Check if sourcePath directly contains SKILL.md subdirs (it's a complete group)
+      const entries = fs.readdirSync(sourcePath, { withFileTypes: true })
+      let copied = 0
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name.startsWith('.')) continue
+        const skillMd = path.join(sourcePath, entry.name, 'SKILL.md')
+        if (fs.existsSync(skillMd)) {
+          const dest = path.join(targetDir, entry.name)
+          if (!fs.existsSync(dest)) {
+            fs.cpSync(path.join(sourcePath, entry.name), dest, { recursive: true })
+            copied++
+          }
+        }
+      }
+
+      if (copied === 0) {
+        // Fallback: maybe it's a single skill folder (contains SKILL.md in root)
+        const skillMd = path.join(sourcePath, 'SKILL.md')
+        if (fs.existsSync(skillMd)) {
+          const skillName = path.basename(sourcePath)
+          const dest = path.join(targetDir, skillName)
+          if (!fs.existsSync(dest)) {
+            fs.cpSync(sourcePath, dest, { recursive: true })
+            copied++
+          }
+        }
+      }
+
+      return { success: true, copied }
+    } catch (e: any) {
+      return { success: false, error: e.message }
+    }
   })
 
   ipcMain.handle('get-manager-path', () => managerDir)

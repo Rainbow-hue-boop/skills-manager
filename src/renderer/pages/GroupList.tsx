@@ -16,6 +16,8 @@ export default function GroupList() {
   const [showAdd, setShowAdd] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
   const [folderPath, setFolderPath] = useState('')
+  const [addMsg, setAddMsg] = useState('')
+  const [addOk, setAddOk] = useState(true)
 
   useEffect(() => { reloadGroups() }, [])
 
@@ -38,17 +40,33 @@ export default function GroupList() {
   function handleOpenAdd() {
     setFolderPath('')
     setNewGroupName('')
+    setAddMsg('')
     setShowAdd(true)
   }
 
   async function handleAddGroup() {
     if (!newGroupName.trim() || !folderPath.trim()) return
-    const paths = folderPath.split(';').map(p => p.trim()).filter(Boolean)
-    for (const srcPath of paths) {
-      await window.skillsApi.addGroup(srcPath, newGroupName.trim())
+    setAddMsg('')
+    try {
+      const paths = folderPath.split(';').map(p => p.trim()).filter(Boolean)
+      let total = 0
+      for (const srcPath of paths) {
+        const r = await window.skillsApi.addGroup(srcPath, newGroupName.trim())
+        if (!r.success) {
+          setAddMsg(`失败：${r.error || srcPath}`)
+          setAddOk(false)
+          return
+        }
+        total += (r as any).copied || 0
+      }
+      setAddMsg(`添加成功，${total} 个技能`)
+      setAddOk(true)
+      setShowAdd(false)
+      reloadGroups()
+    } catch (err: any) {
+      setAddMsg(`错误：${err.message || err}`)
+      setAddOk(false)
     }
-    setShowAdd(false)
-    reloadGroups()
   }
 
   const allTags = [...new Set(groups.flatMap(g => g.tags))].sort()
@@ -107,6 +125,11 @@ export default function GroupList() {
               <button className="btn btn-primary" onClick={handleAddGroup}>确认添加</button>
               <button className="btn btn-secondary" onClick={() => setShowAdd(false)}>取消</button>
             </div>
+            {addMsg && (
+              <div style={{ fontSize: 12, color: addOk ? 'var(--status-green)' : 'var(--status-red)' }}>
+                {addMsg}
+              </div>
+            )}
           </div>
         </div>
       )}
