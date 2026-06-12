@@ -39,13 +39,13 @@ function sendOpenRequest(port: number): Promise<boolean> {
 
 function launchElectron(): void {
   const possiblePaths = [
+    path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
     path.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron'),
-    path.join(__dirname, '..', '..', '..', 'node_modules', '.bin', 'electron'),
   ]
 
   for (const p of possiblePaths) {
     if (fs.existsSync(p) || fs.existsSync(p + '.cmd')) {
-      execSync(`"${p}" "${path.join(__dirname, '..', '..')}"`, { stdio: 'inherit', cwd: path.join(__dirname, '..', '..') })
+      execSync(`"${p}" "${path.join(__dirname, '..')}"`, { stdio: 'inherit', cwd: path.join(__dirname, '..') })
       return
     }
   }
