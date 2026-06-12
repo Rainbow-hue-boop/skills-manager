@@ -150,12 +150,11 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle('get-manager-path', () => managerDir)
 
-  ipcMain.handle('select-folder', async () => {
-    const result = await dialog.showOpenDialog({
+  ipcMain.handle('select-folder', () => {
+    const result = dialog.showOpenDialogSync(mainWindow!, {
       properties: ['openDirectory', 'multiSelections'],
       title: '选择包含 SKILL.md 的文件夹'
     })
-    console.log('select-folder result:', JSON.stringify(result))
-    return result.canceled ? [] : result.filePaths
+    return result || []
   })
 }
