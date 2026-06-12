@@ -15,7 +15,7 @@ export default function GroupList() {
   const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
-  const [selectedFolders, setSelectedFolders] = useState<string[]>([])
+  const [folderPath, setFolderPath] = useState('')
 
   useEffect(() => { reloadGroups() }, [])
 
@@ -24,26 +24,30 @@ export default function GroupList() {
     setGroups(Object.values(data))
   }
 
-  async function handleSelectFolder() {
+  async function handleBrowse() {
     try {
       const paths = await window.skillsApi.selectFolder()
       if (paths && paths.length > 0) {
-        setSelectedFolders(paths)
-        setShowAdd(true)
+        setFolderPath(paths.join(';'))
       }
     } catch (err) {
       console.error('selectFolder failed:', err)
     }
   }
 
+  function handleOpenAdd() {
+    setFolderPath('')
+    setNewGroupName('')
+    setShowAdd(true)
+  }
+
   async function handleAddGroup() {
-    if (!newGroupName.trim() || selectedFolders.length === 0) return
-    for (const srcPath of selectedFolders) {
+    if (!newGroupName.trim() || !folderPath.trim()) return
+    const paths = folderPath.split(';').map(p => p.trim()).filter(Boolean)
+    for (const srcPath of paths) {
       await window.skillsApi.addGroup(srcPath, newGroupName.trim())
     }
     setShowAdd(false)
-    setNewGroupName('')
-    setSelectedFolders([])
     reloadGroups()
   }
 
@@ -61,7 +65,7 @@ export default function GroupList() {
           <h1 className="page-title">技能组</h1>
           <p className="page-subtitle">{groups.length} 个技能组</p>
         </div>
-        <button className="btn btn-primary" onClick={handleSelectFolder}>
+        <button className="btn btn-primary" onClick={handleOpenAdd}>
           + 添加技能组
         </button>
       </div>
@@ -81,9 +85,18 @@ export default function GroupList() {
           <h3 style={{ fontSize: 14, marginBottom: 12 }}>添加技能组</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div>
-              <label className="settings-label">已选文件夹</label>
-              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
-                {selectedFolders.join(', ')}
+              <label className="settings-label">文件夹路径</label>
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <input
+                  className="input"
+                  value={folderPath}
+                  onChange={e => setFolderPath(e.target.value)}
+                  placeholder="如 D:\skills\superpowers（包含 SKILL.md 子文件夹）"
+                  style={{ flex: 1 }}
+                />
+                <button className="btn btn-secondary" onClick={handleBrowse} style={{ whiteSpace: 'nowrap' }}>
+                  浏览...
+                </button>
               </div>
             </div>
             <div>
@@ -92,7 +105,7 @@ export default function GroupList() {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn btn-primary" onClick={handleAddGroup}>确认添加</button>
-              <button className="btn btn-secondary" onClick={() => { setShowAdd(false); setSelectedFolders([]) }}>取消</button>
+              <button className="btn btn-secondary" onClick={() => setShowAdd(false)}>取消</button>
             </div>
           </div>
         </div>
