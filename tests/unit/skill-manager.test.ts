@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { scanGroups, readLockFile, writeLockFile, getSkillManagerDir } from '../../src/main/skill-manager'
+import { scanGroups, readLockFile, writeLockFile, getSkillManagerDir, installSkills, isCrossVolume } from '../../src/main/skill-manager'
 
 let tmpDir: string
 
@@ -64,5 +64,52 @@ describe('readLockFile', () => {
     const result = readLockFile(tmpDir)
     expect(result).toBeNull()
     expect(fs.existsSync(path.join(tmpDir, 'skills-lock.json.corrupted'))).toBe(true)
+  })
+})
+
+describe('installSkills', () => {
+  it('creates directory symlinks on same volume', () => {
+    fs.mkdirSync(path.join(tmpDir, 'superpowers', 'brainstorming'), { recursive: true })
+    fs.writeFileSync(path.join(tmpDir, 'superpowers', 'brainstorming', 'SKILL.md'), '# Skill')
+
+    const projectDir = path.join(tmpDir, 'project')
+    fs.mkdirSync(projectDir, { recursive: true })
+
+    const results = installSkills(tmpDir, projectDir, 'superpowers')
+    expect(results.length).toBe(1)
+    expect(results[0].skillName).toBe('brainstorming')
+    expect(results[0].status).toBe('success')
+
+    const linkPath = path.join(projectDir, '.agents', 'skills', 'brainstorming')
+    expect(fs.existsSync(linkPath)).toBe(true)
+    // On Windows, mklink /J creates junctions which are not symbolic links in Node.js
+    expect(fs.existsSync(path.join(linkPath, 'SKILL.md'))).toBe(true)
+  })
+
+  it('skips if skill already exists', () => {
+    fs.mkdirSync(path.join(tmpDir, 'superpowers', 'brainstorming'), { recursive: true })
+    fs.writeFileSync(path.join(tmpDir, 'superpowers', 'brainstorming', 'SKILL.md'), '# Skill')
+
+    const projectDir = path.join(tmpDir, 'project')
+    const skillsDir = path.join(projectDir, '.agents', 'skills', 'brainstorming')
+    fs.mkdirSync(skillsDir, { recursive: true })
+
+    const results = installSkills(tmpDir, projectDir, 'superpowers')
+    expect(results[0].status).toBe('skipped')
+  })
+
+  it('writes .skills-installed.json', () => {
+    fs.mkdirSync(path.join(tmpDir, 'superpowers', 'brainstorming'), { recursive: true })
+    fs.writeFileSync(path.join(tmpDir, 'superpowers', 'brainstorming', 'SKILL.md'), '# Skill')
+
+    const projectDir = path.join(tmpDir, 'project')
+
+    installSkills(tmpDir, projectDir, 'superpowers')
+
+    const installedPath = path.join(projectDir, '.agents', 'skills', '.skills-installed.json')
+    expect(fs.existsSync(installedPath)).toBe(true)
+    const data = JSON.parse(fs.readFileSync(installedPath, 'utf-8'))
+    expect(data.skills.brainstorming).toBeDefined()
+    expect(data.skills.brainstorming.group).toBe('superpowers')
   })
 })
