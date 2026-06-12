@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import SkillCard from '../components/SkillCard'
 import TagPill from '../components/TagPill'
-import { InstallResult } from '../../shared/types'
+import { InstallResult, TagEntry } from '../../shared/types'
 
 interface SkillInfo { name: string; hash: string; source: string }
 
@@ -16,13 +16,15 @@ export default function GroupDetail({ cliPath }: GroupDetailProps) {
   const [results, setResults] = useState<InstallResult[]>([])
   const [installing, setInstalling] = useState(false)
   const [toast, setToast] = useState<{ title: string; body: string } | null>(null)
-  const [tags, setTags] = useState<string[]>([])
+  const [tags, setTags] = useState<TagEntry[]>([])
   const [newTag, setNewTag] = useState('')
+  const [tagColor, setTagColor] = useState('#6b8cff')
+  const COLORS = ['#6b8cff', '#ff6b6b', '#51cf66', '#ffd43b', '#cc5de8', '#ff922b', '#20c997', '#f06595']
 
   useEffect(() => {
     if (groupName) {
       window.skillsApi.getGroupSkills(groupName).then(setSkills)
-      window.skillsApi.getGroupTags(groupName).then(setTags)
+      ;(window as any).skillsApi.getGroupTags(groupName).then(setTags)
     }
   }, [groupName])
 
@@ -31,8 +33,8 @@ export default function GroupDetail({ cliPath }: GroupDetailProps) {
   async function addTag() {
     if (!newTag.trim() || !groupName) return
     try {
-      const updated = [...tags, newTag.trim()]
-      await window.skillsApi.saveGroupTags(groupName, updated)
+      const updated = [...tags, { name: newTag.trim(), color: tagColor }]
+      await (window as any).skillsApi.saveGroupTags(groupName, updated)
       setTags(updated)
       setNewTag('')
     } catch (err) {
@@ -40,11 +42,11 @@ export default function GroupDetail({ cliPath }: GroupDetailProps) {
     }
   }
 
-  async function removeTag(tag: string) {
+  async function removeTag(tagName: string) {
     if (!groupName) return
     try {
-      const updated = tags.filter(t => t !== tag)
-      await window.skillsApi.saveGroupTags(groupName, updated)
+      const updated = tags.filter(t => t.name !== tagName)
+      await (window as any).skillsApi.saveGroupTags(groupName, updated)
       setTags(updated)
     } catch (err) {
       console.error('saveGroupTags failed:', err)
@@ -89,7 +91,20 @@ export default function GroupDetail({ cliPath }: GroupDetailProps) {
           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>标签：</span>
           <div className="tag-pills">
             {tags.map(t => (
-              <TagPill key={t} label={t} onRemove={() => removeTag(t)} />
+              <TagPill key={t.name} label={t.name} color={t.color} onRemove={() => removeTag(t.name)} />
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+            {COLORS.map(c => (
+              <div
+                key={c}
+                onClick={() => setTagColor(c)}
+                style={{
+                  width: 16, height: 16, borderRadius: 4, background: c, cursor: 'pointer',
+                  border: tagColor === c ? '2px solid #fff' : '2px solid transparent',
+                  boxSizing: 'border-box'
+                }}
+              />
             ))}
           </div>
           <input

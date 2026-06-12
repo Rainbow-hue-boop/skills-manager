@@ -49,7 +49,17 @@ export function readLockFile(managerDir: string): SkillsLockFile | null {
 
   try {
     const raw = fs.readFileSync(lockPath, 'utf-8')
-    return JSON.parse(raw) as SkillsLockFile
+    const data = JSON.parse(raw)
+    // Migrate old string[] tags to TagEntry[]
+    if (data.groups) {
+      for (const key of Object.keys(data.groups)) {
+        const tags = data.groups[key].tags
+        if (tags && tags.length > 0 && typeof tags[0] === 'string') {
+          data.groups[key].tags = tags.map((t: string) => ({ name: t, color: '#888' }))
+        }
+      }
+    }
+    return data as SkillsLockFile
   } catch {
     const backupPath = path.join(managerDir, 'skills-lock.json.corrupted')
     if (!fs.existsSync(backupPath)) {

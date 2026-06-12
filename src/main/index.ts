@@ -65,14 +65,14 @@ function registerIpcHandlers(): void {
   ipcMain.handle('get-groups', () => {
     const lockFile = readLockFile(managerDir)
     const scanned = scanGroups(managerDir)
-    const groups: Record<string, { name: string; skillCount: number; tags: string[]; source: string }> = {}
+    const groups: Record<string, any> = {}
 
     for (const [groupName, skills] of Object.entries(scanned)) {
       const lockGroup = lockFile?.groups[groupName]
       groups[groupName] = {
         name: groupName,
         skillCount: skills.length,
-        tags: lockGroup?.tags || [],
+        tags: (lockGroup?.tags || []) as any,
         source: lockGroup?.source || 'local'
       }
     }
@@ -150,7 +150,7 @@ function registerIpcHandlers(): void {
     return lock?.groups[groupName]?.tags || []
   })
 
-  ipcMain.handle('save-group-tags', (_event, groupName: string, tags: string[]) => {
+  ipcMain.handle('save-group-tags', (_event, groupName: string, tags: any[]) => {
     const lock = readLockFile(managerDir) || { version: 1, groups: {}, skills: {} }
     if (!lock.groups[groupName]) {
       lock.groups[groupName] = { source: '', sourceType: 'github', installedAt: new Date().toISOString(), tags: [] }

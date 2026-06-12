@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import TagPill from './TagPill'
+import { TagEntry } from '../../shared/types'
 
 interface GroupCardProps {
   name: string
   skillCount: number
-  tags: string[]
+  tags: TagEntry[]
   source: string
 }
 
@@ -17,7 +18,7 @@ export default function GroupCard({ name, skillCount, tags, source }: GroupCardP
       <div className="card-meta">{skillCount} skills · {source}</div>
       <div className="tag-pills">
         {tags.map(tag => (
-          <TagPill key={tag} label={tag} />
+          <TagPill key={tag.name} label={tag.name} color={tag.color || undefined} />
         ))}
       </div>
     </div>

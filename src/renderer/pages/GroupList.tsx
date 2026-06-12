@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import GroupCard from '../components/GroupCard'
 import TagPill from '../components/TagPill'
+import { TagEntry } from '../../shared/types'
 
 interface GroupInfo {
   name: string
   skillCount: number
-  tags: string[]
+  tags: TagEntry[]
   source: string
 }
 
@@ -23,7 +24,7 @@ export default function GroupList() {
 
   async function reloadGroups() {
     const data = await window.skillsApi.getGroups()
-    setGroups(Object.values(data))
+    setGroups(Object.values(data) as unknown as GroupInfo[])
   }
 
   async function handleBrowse() {
@@ -51,7 +52,7 @@ export default function GroupList() {
       const paths = folderPath.split(';').map(p => p.trim()).filter(Boolean)
       let total = 0
       for (const srcPath of paths) {
-        const r = await window.skillsApi.addGroup(srcPath, newGroupName.trim())
+        const r = await window.skillsApi.addGroup(srcPath, newGroupName.trim()) as any
         if (!r.success) {
           setAddMsg(`失败：${r.error || srcPath}`)
           setAddOk(false)
@@ -69,10 +70,10 @@ export default function GroupList() {
     }
   }
 
-  const allTags = [...new Set(groups.flatMap(g => g.tags))].sort()
+  const allTags = [...new Set(groups.flatMap(g => g.tags.map(t => t.name)))].sort()
   const filtered = groups.filter(g => {
     if (search && !g.name.toLowerCase().includes(search.toLowerCase())) return false
-    if (tagFilter && !g.tags.includes(tagFilter)) return false
+    if (tagFilter && !g.tags.some(t => t.name === tagFilter)) return false
     return true
   })
 

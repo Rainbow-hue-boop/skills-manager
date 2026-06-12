@@ -5,11 +5,16 @@ export interface SkillEntry {
   computedHash: string
 }
 
+export interface TagEntry {
+  name: string
+  color: string
+}
+
 export interface GroupEntry {
   source: string
   sourceType: 'github'
   installedAt: string
-  tags: string[]
+  tags: TagEntry[]
 }
 
 export interface SkillsLockFile {
