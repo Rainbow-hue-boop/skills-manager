@@ -4,7 +4,7 @@ import { GitStatus, GitLogEntry } from '../shared/types'
 function git(args: string[], cwd: string): string {
   const opts: ExecSyncOptions = { cwd, encoding: 'utf-8', timeout: 30000, stdio: 'pipe' }
   try {
-    return execSync(`git ${args.join(' ')}`, opts).trim()
+    return execSync(`git ${args.join(' ')}`, opts).toString().trim()
   } catch (e: any) {
     const stderr = e.stderr?.toString() || ''
     throw new Error(stderr.trim() || e.message)
