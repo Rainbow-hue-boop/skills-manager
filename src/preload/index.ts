@@ -19,7 +19,9 @@ const api = {
   },
   onInstallProgress: (callback: (data: { current: number; total: number }) => void) => {
     ipcRenderer.on('install-progress', (_event, data) => callback(data))
-  }
+  },
+  getManagerPath: () => ipcRenderer.invoke('get-manager-path'),
+  selectFolder: () => ipcRenderer.invoke('select-folder')
 }
 
 contextBridge.exposeInMainWorld('skillsApi', api)
