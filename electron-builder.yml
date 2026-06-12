@@ -1,0 +1,19 @@
+appId: com.skills-manager.app
+productName: Skills Manager
+directories:
+  output: dist
+files:
+  - out/**/*
+  - resources/**/*
+extraResources:
+  - from: cli/
+    to: cli/
+win:
+  target: nsis
+  icon: resources/icon.png
+mac:
+  target: dmg
+  icon: resources/icon.png
+  extendInfo:
+    LSEnvironment:
+      PATH: /usr/local/bin:/usr/bin:/bin
