@@ -85,14 +85,17 @@ export default function GroupList() {
           <p className="page-subtitle">{groups.length} 个技能组</p>
         </div>
         <button className="btn btn-primary" onClick={handleOpenAdd}>
-          + 添加技能组
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M6 1v10M1 6h10" />
+          </svg>
+          添加技能组
         </button>
       </div>
 
       <div className="search-bar">
         <input className="input" placeholder="搜索技能组..." value={search} onChange={e => setSearch(e.target.value)} />
         <div className="tag-pills" style={{ alignItems: 'center' }}>
-          <TagPill label="全部" onRemove={tagFilter ? () => setTagFilter(null) : undefined} />
+          <TagPill label="全部" color={tagFilter === null ? 'var(--accent)' : undefined} onRemove={tagFilter ? () => setTagFilter(null) : undefined} />
           {allTags.map(tag => (
             <TagPill key={tag} label={tag} onRemove={tagFilter === tag ? () => setTagFilter(null) : undefined} />
           ))}
@@ -142,8 +145,10 @@ export default function GroupList() {
         </div>
       ) : (
         <div className="card-grid">
-          {filtered.map(g => (
-            <GroupCard key={g.name} name={g.name} skillCount={g.skillCount} tags={g.tags} source={g.source} />
+          {filtered.map((g, i) => (
+            <div key={g.name} className="card-enter" style={{ animationDelay: `${i * 60}ms` }}>
+              <GroupCard name={g.name} skillCount={g.skillCount} tags={g.tags} source={g.source} />
+            </div>
           ))}
         </div>
       )}

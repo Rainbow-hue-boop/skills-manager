@@ -19,7 +19,7 @@ export default function GroupDetail({ cliPath }: GroupDetailProps) {
   const [tags, setTags] = useState<TagEntry[]>([])
   const [newTag, setNewTag] = useState('')
   const [tagColor, setTagColor] = useState('#6b8cff')
-  const COLORS = ['#6b8cff', '#ff6b6b', '#51cf66', '#ffd43b', '#cc5de8', '#ff922b', '#20c997', '#f06595']
+  const COLORS = ['#5b7ed4', '#d47979', '#5ba86b', '#c49a3c', '#a86ebf', '#d47a3a', '#4a9e7e', '#c46585']
 
   useEffect(() => {
     if (groupName) {
@@ -101,7 +101,7 @@ export default function GroupDetail({ cliPath }: GroupDetailProps) {
                 onClick={() => setTagColor(c)}
                 style={{
                   width: 16, height: 16, borderRadius: 4, background: c, cursor: 'pointer',
-                  border: tagColor === c ? '2px solid #fff' : '2px solid transparent',
+                  border: tagColor === c ? '2px solid var(--accent)' : '2px solid transparent',
                   boxSizing: 'border-box'
                 }}
               />
@@ -119,7 +119,7 @@ export default function GroupDetail({ cliPath }: GroupDetailProps) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 24, alignItems: 'center' }}>
         <input className="input" placeholder="项目路径，如 /path/to/project" value={projectPath} onChange={e => setProjectPath(e.target.value)} />
         <button className="btn btn-primary" onClick={handleInstall} disabled={installing || !projectPath}>
           {installing ? '安装中...' : '安装到项目'}

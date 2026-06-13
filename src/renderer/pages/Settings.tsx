@@ -48,7 +48,7 @@ export default function Settings() {
 
         <div className="settings-group">
           <label className="settings-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input type="checkbox" checked={autoSync} onChange={e => setAutoSync(e.target.checked)} style={{ accentColor: 'var(--accent)' }} />
+            <input type="checkbox" checked={autoSync} onChange={e => setAutoSync(e.target.checked)} />
             启动时自动同步
           </label>
           <span className="settings-hint">打开应用时自动执行 git pull</span>
@@ -59,10 +59,11 @@ export default function Settings() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{
               fontSize: 12,
-              color: cliInstalled ? 'var(--status-green)' : 'var(--status-yellow)',
-              background: cliInstalled ? 'rgba(52,211,153,0.1)' : 'rgba(251,191,36,0.1)',
-              padding: '2px 8px',
-              borderRadius: 4
+              color: cliInstalled ? 'var(--status-green)' : 'var(--text-tertiary)',
+              background: cliInstalled ? 'rgba(74,222,128,0.08)' : 'rgba(255,255,255,0.04)',
+              padding: '3px 10px',
+              borderRadius: 4,
+              fontWeight: 500
             }}>
               {cliInstalled ? '已安装 /usr/local/bin/skills' : '未安装'}
             </span>
