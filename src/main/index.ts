@@ -281,6 +281,59 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle('get-manager-path', () => managerDir)
 
+  ipcMain.handle('setup-cli', async () => {
+    // Determine the CLI script path
+    const cliPath = app.isPackaged
+      ? path.join(process.resourcesPath, 'cli', 'skills.js')
+      : path.resolve(__dirname, '..', '..', 'dist-cli', 'skills.js')
+
+    if (!fs.existsSync(cliPath)) {
+      return { success: false, message: `CLI script not found: ${cliPath}`, needSudo: false }
+    }
+
+    const linkPath = '/usr/local/bin/skills'
+
+    // Remove existing symlink or stale file
+    let needSudo = false
+    try { fs.unlinkSync(linkPath) } catch (e: any) {
+      if (e.code === 'EACCES' || e.code === 'EPERM') needSudo = true
+      /* otherwise doesn't exist – ok */
+    }
+
+    if (needSudo) {
+      return { success: false, message: `Permission denied. Run in terminal:\nsudo ln -sf "${cliPath}" "${linkPath}"`, needSudo: true }
+    }
+
+    // Ensure /usr/local/bin exists
+    const binDir = path.dirname(linkPath)
+    try { fs.mkdirSync(binDir, { recursive: true }) } catch { /* may exist */ }
+
+    try {
+      fs.symlinkSync(cliPath, linkPath)
+      try { fs.chmodSync(linkPath, 0o755) } catch { /* ok */ }
+      return { success: true, message: `CLI installed: ${linkPath}`, needSudo: false }
+    } catch (e: any) {
+      if (e.code === 'EEXIST') {
+        return { success: false, message: `Permission denied. Run in terminal:\nsudo ln -sf "${cliPath}" "${linkPath}"`, needSudo: true }
+      }
+      if (e.code === 'EACCES' || e.code === 'EPERM') {
+        return { success: false, message: `Permission denied. Run in terminal:\nsudo ln -sf "${cliPath}" "${linkPath}"`, needSudo: true }
+      }
+      return { success: false, message: `Failed: ${e.message}`, needSudo: false }
+    }
+  })
+
+  ipcMain.handle('get-cli-status', () => {
+    const linkPath = '/usr/local/bin/skills'
+    try {
+      const target = fs.readlinkSync(linkPath)
+      const valid = fs.existsSync(target)
+      return { installed: valid, target, linkPath }
+    } catch {
+      return { installed: false, target: null, linkPath }
+    }
+  })
+
   ipcMain.handle('select-folder', () => {
     const result = dialog.showOpenDialogSync(mainWindow!, {
       properties: ['openDirectory', 'multiSelections'],

@@ -12,6 +12,8 @@ interface SkillsManagerApi {
   onOpenFromCli(callback: (path: string) => void): void
   onInstallProgress(callback: (data: { current: number; total: number }) => void): void
   getManagerPath(): Promise<string>
+  setupCli(): Promise<{ success: boolean; message: string; needSudo: boolean }>
+  getCliStatus(): Promise<{ installed: boolean; target: string | null; linkPath: string }>
   selectFolder(): Promise<string[]>
   getGroupTags(groupName: string): Promise<any[]>
   saveGroupTags(groupName: string, tags: any[]): Promise<{ success: boolean }>

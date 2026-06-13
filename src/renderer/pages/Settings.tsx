@@ -5,6 +5,9 @@ export default function Settings() {
   const [autoSync, setAutoSync] = useState(false)
   const [saved, setSaved] = useState(false)
   const [managerPath, setManagerPath] = useState('')
+  const [cliInstalled, setCliInstalled] = useState(false)
+  const [cliMessage, setCliMessage] = useState('')
+  const [cliLoading, setCliLoading] = useState(false)
 
   useEffect(() => {
     window.skillsApi.getSettings().then(s => {
@@ -12,6 +15,7 @@ export default function Settings() {
       setAutoSync(s.autoSync || false)
     })
     window.skillsApi.getManagerPath().then(setManagerPath)
+    window.skillsApi.getCliStatus().then(s => setCliInstalled(s.installed))
   }, [])
 
   async function handleSave() {
@@ -48,6 +52,42 @@ export default function Settings() {
             启动时自动同步
           </label>
           <span className="settings-hint">打开应用时自动执行 git pull</span>
+        </div>
+
+        <div className="settings-group">
+          <label className="settings-label">CLI 快捷命令</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{
+              fontSize: 12,
+              color: cliInstalled ? 'var(--status-green)' : 'var(--status-yellow)',
+              background: cliInstalled ? 'rgba(52,211,153,0.1)' : 'rgba(251,191,36,0.1)',
+              padding: '2px 8px',
+              borderRadius: 4
+            }}>
+              {cliInstalled ? '已安装 /usr/local/bin/skills' : '未安装'}
+            </span>
+            <button
+                className="btn btn-primary"
+                onClick={async () => {
+                  setCliLoading(true)
+                  setCliMessage('')
+                  const r = await window.skillsApi.setupCli()
+                  setCliLoading(false)
+                  setCliMessage(r.message)
+                  if (r.success) setCliInstalled(true)
+                }}
+                disabled={cliLoading}
+                style={{ fontSize: 12, padding: '4px 12px' }}
+              >
+                {cliLoading ? '安装中...' : cliInstalled ? '重新安装' : '一键安装'}
+              </button>
+          </div>
+          {cliMessage && (
+            <div style={{ marginTop: 8, fontSize: 11, color: cliMessage.includes('Permission') || cliMessage.includes('Failed') ? 'var(--status-red)' : 'var(--status-green)', whiteSpace: 'pre-wrap' }}>
+              {cliMessage}
+            </div>
+          )}
+          <span className="settings-hint">终端输入 skills 即可唤起 GUI 并带入当前目录</span>
         </div>
 
         {navigator.platform?.startsWith('Win') && (

@@ -21,6 +21,8 @@ const api = {
     ipcRenderer.on('install-progress', (_event, data) => callback(data))
   },
   getManagerPath: () => ipcRenderer.invoke('get-manager-path'),
+  setupCli: () => ipcRenderer.invoke('setup-cli'),
+  getCliStatus: () => ipcRenderer.invoke('get-cli-status'),
   selectFolder: () => ipcRenderer.invoke('select-folder'),
   getGroupTags: (groupName: string) => ipcRenderer.invoke('get-group-tags', groupName),
   saveGroupTags: (groupName: string, tags: string[]) => ipcRenderer.invoke('save-group-tags', groupName, tags)

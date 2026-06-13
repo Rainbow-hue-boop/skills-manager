@@ -4,7 +4,7 @@
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
-    "build": "electron-vite build",
+    "build": "electron-vite build && chmod +x dist-cli/skills.js",
     "preview": "electron-vite preview",
     "package:win": "electron-builder --win",
     "package:mac": "electron-builder --mac",

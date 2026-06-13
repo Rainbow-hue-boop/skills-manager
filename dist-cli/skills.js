@@ -49,7 +49,7 @@ function launchElectron() {
     // Packaged macOS: CLI lives at Contents/Resources/cli/ inside the .app bundle
     // Launch via `open` to activate the GUI
     if (__dirname.includes('Contents/Resources/cli')) {
-        const appPath = path_1.default.resolve(__dirname, '..', '..');
+        const appPath = path_1.default.resolve(__dirname, '..', '..', '..');
         try {
             (0, child_process_1.execSync)(`open "${appPath}"`, { stdio: 'inherit' });
             return;

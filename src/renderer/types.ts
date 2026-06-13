@@ -16,6 +16,8 @@ declare global {
       onOpenFromCli: (callback: (path: string) => void) => void
       onInstallProgress: (callback: (data: { current: number; total: number }) => void) => void
       getManagerPath: () => Promise<string>
+      setupCli: () => Promise<{ success: boolean; message: string; needSudo: boolean }>
+      getCliStatus: () => Promise<{ installed: boolean; target: string | null; linkPath: string }>
       selectFolder: () => Promise<string[]>
     }
   }
