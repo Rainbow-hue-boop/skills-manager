@@ -5,7 +5,7 @@ directories:
 files:
   - out/**/*
 extraResources:
-  - from: cli/
+  - from: dist-cli/
     to: cli/
 win:
   target:

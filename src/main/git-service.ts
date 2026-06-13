@@ -22,6 +22,10 @@ export function isGitRepo(dir: string): boolean {
 
 export function gitInit(dir: string): void {
   git(['init'], dir)
+  // Ensure the default branch is 'master' (not 'main' on newer git)
+  try {
+    git(['branch', '-m', 'master'], dir)
+  } catch { /* already master or no commits yet – ok */ }
 }
 
 export function setRemote(dir: string, url: string): void {
@@ -55,7 +59,7 @@ export function getStatus(dir: string): GitStatus {
     ahead,
     behind,
     hasConflicts: output.includes('UU ') || output.includes('DD ') || output.includes('AA '),
-    currentBranch: branchLine.split(' ').pop()?.replace('...', '') || 'main',
+    currentBranch: branchLine.split(' ').pop()?.replace('...', '') || 'master',
     remoteUrl,
     lastSync: null
   }

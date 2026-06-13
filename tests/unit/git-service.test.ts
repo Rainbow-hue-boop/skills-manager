@@ -24,7 +24,7 @@ beforeEach(() => {
   runGit('add -A', tmpDir)
   runGit('commit -m "init"', tmpDir)
   runGit(`remote add origin ${remoteDir}`, tmpDir)
-  runGit('push -u origin master', tmpDir)
+  runGit('push -u origin HEAD', tmpDir)
 })
 
 afterEach(() => {

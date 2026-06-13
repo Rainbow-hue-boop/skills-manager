@@ -46,6 +46,19 @@ function launchElectron() {
     const dir = path_1.default.join(os_1.default.homedir(), '.skills-manager');
     fs_1.default.mkdirSync(dir, { recursive: true });
     fs_1.default.writeFileSync(PENDING_PATH_FILE, cwd, 'utf-8');
+    // Packaged macOS: CLI lives at Contents/Resources/cli/ inside the .app bundle
+    // Launch via `open` to activate the GUI
+    if (__dirname.includes('Contents/Resources/cli')) {
+        const appPath = path_1.default.resolve(__dirname, '..', '..');
+        try {
+            (0, child_process_1.execSync)(`open "${appPath}"`, { stdio: 'inherit' });
+            return;
+        }
+        catch { /* fall through to error */ }
+        console.error('Failed to launch Skills Manager.app');
+        process.exit(1);
+    }
+    // Dev mode: launch Electron from node_modules
     const possiblePaths = [
         path_1.default.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
         path_1.default.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron'),

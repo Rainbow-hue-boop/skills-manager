@@ -114,29 +114,59 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle('git-sync', async () => {
     try {
+      // 1. Fetch latest from remote
+      execSync('git fetch origin', { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' })
+
+      // 2. Detect remote's default branch
+      const remoteRefs = execSync('git branch -r', { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' }).trim()
+      const remoteBranches = remoteRefs.split('\n').map(l => l.trim()).filter(l => l.startsWith('origin/') && !l.includes('HEAD'))
+      const preferred = remoteBranches.find(h => h === 'origin/master') || remoteBranches.find(h => h === 'origin/main') || remoteBranches[0]
+
+      // 3. If remote has a different branch, switch local to match
+      if (preferred) {
+        const remoteBranch = preferred.replace('origin/', '')
+        const localBranch = (() => {
+          try { return execSync('git rev-parse --abbrev-ref HEAD', { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' }).trim() } catch { return '' }
+        })()
+        if (localBranch !== remoteBranch) {
+          try {
+            execSync(`git checkout -b ${remoteBranch} --track ${preferred}`, { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' })
+          } catch {
+            execSync(`git checkout ${remoteBranch}`, { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' })
+            execSync(`git branch --set-upstream-to=${preferred} ${remoteBranch}`, { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' })
+          }
+        }
+      }
+
+      // 4. If remote branch exists with commits, pull it down first
+      if (preferred) {
+        try {
+          execSync(`git merge ${preferred} --allow-unrelated-histories --no-edit`, {
+            cwd: managerDir, encoding: 'utf-8', stdio: 'pipe'
+          })
+        } catch {
+          // If merge fails (local has no commits yet), just reset to remote state
+          try {
+            execSync(`git reset --hard ${preferred}`, { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' })
+          } catch { /* remote might just have no commits */ }
+        }
+      }
+
       const branch = (() => {
         try {
           return execSync('git rev-parse --abbrev-ref HEAD', { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' }).trim()
         } catch { return 'master' }
       })()
 
+      // 5. Stage and commit local changes
       gitAddAll(managerDir)
-
-      // Always commit (allow-empty for first sync)
       try { gitCommit(managerDir, 'sync') } catch {
         execSync(`git commit --allow-empty -m "init: skills sync"`, {
           cwd: managerDir, encoding: 'utf-8', stdio: 'pipe'
         })
       }
 
-      // Pull
-      try {
-        execSync(`git pull origin ${branch} --allow-unrelated-histories`, {
-          cwd: managerDir, encoding: 'utf-8', stdio: 'pipe'
-        })
-      } catch { /* empty remote ok */ }
-
-      // Push
+      // 6. Push
       execSync(`git push -u origin ${branch}`, { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' })
       return { success: true }
     } catch (e: any) {
@@ -186,6 +216,26 @@ function registerIpcHandlers(): void {
         gitInit(managerDir)
       }
       setRemote(managerDir, settings.remoteUrl)
+
+      // Fetch and checkout the remote's default branch so sync works immediately
+      try {
+        execSync('git fetch origin', { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' })
+        // Find the remote HEAD (e.g. origin/master, origin/main)
+        const refs = execSync('git branch -r', { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' }).trim()
+        const remoteHeads = refs.split('\n').map(l => l.trim()).filter(l => l.startsWith('origin/') && !l.includes('HEAD'))
+        const preferred = remoteHeads.find(h => h === 'origin/master') || remoteHeads.find(h => h === 'origin/main') || remoteHeads[0]
+        if (preferred) {
+          const branchName = preferred.replace('origin/', '')
+          try {
+            execSync(`git checkout -b ${branchName} --track ${preferred}`, {
+              cwd: managerDir, encoding: 'utf-8', stdio: 'pipe'
+            })
+          } catch {
+            // Branch might already exist; try switching
+            try { execSync(`git checkout ${branchName}`, { cwd: managerDir, encoding: 'utf-8', stdio: 'pipe' }) } catch { /* ok */ }
+          }
+        }
+      } catch { /* remote may be empty – ok, push on first sync will set up tracking */ }
     }
     return { success: true }
   })
