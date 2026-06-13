@@ -1,18 +1,24 @@
 interface TagPillProps {
   label: string
   color?: string
+  onClick?: () => void
   onRemove?: () => void
+  active?: boolean
 }
 
-export default function TagPill({ label, color, onRemove }: TagPillProps) {
+export default function TagPill({ label, color, onClick, onRemove, active }: TagPillProps) {
   return (
     <span
       className="tag-pill"
-      style={color ? { borderColor: color, color: color, background: color + '1A' } : undefined}
+      onClick={onClick}
+      style={{
+        cursor: onClick ? 'pointer' : 'default',
+        ...(active ? { borderColor: 'var(--accent)', color: 'var(--accent)', background: 'var(--accent)20' } : color ? { borderColor: color, color: color, background: color + '1A' } : {})
+      }}
     >
       {label}
       {onRemove && (
-        <button className="tag-remove" onClick={onRemove}>×</button>
+        <button className="tag-remove" onClick={(e) => { e.stopPropagation(); onRemove() }}>×</button>
       )}
     </span>
   )

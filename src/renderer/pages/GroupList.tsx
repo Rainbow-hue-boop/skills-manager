@@ -95,9 +95,18 @@ export default function GroupList() {
       <div className="search-bar">
         <input className="input" placeholder="搜索技能组..." value={search} onChange={e => setSearch(e.target.value)} />
         <div className="tag-pills" style={{ alignItems: 'center' }}>
-          <TagPill label="全部" color={tagFilter === null ? 'var(--accent)' : undefined} onRemove={tagFilter ? () => setTagFilter(null) : undefined} />
+          <TagPill
+            label="全部"
+            active={tagFilter === null}
+            onClick={() => setTagFilter(null)}
+          />
           {allTags.map(tag => (
-            <TagPill key={tag} label={tag} onRemove={tagFilter === tag ? () => setTagFilter(null) : undefined} />
+            <TagPill
+              key={tag}
+              label={tag}
+              active={tagFilter === tag}
+              onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
+            />
           ))}
         </div>
       </div>
