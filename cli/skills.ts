@@ -56,6 +56,16 @@ function launchElectron(): void {
     process.exit(1)
   }
 
+  // Packaged Windows: CLI lives at resources/cli/ inside the install dir
+  if (process.platform === 'win32') {
+    const appDir = path.resolve(__dirname, '..', '..')
+    const exePath = path.join(appDir, 'Skills Manager.exe')
+    if (fs.existsSync(exePath)) {
+      execSync(`"${exePath}"`, { stdio: 'ignore' })
+      return
+    }
+  }
+
   // Dev mode: launch Electron from node_modules
   const possiblePaths = [
     path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),

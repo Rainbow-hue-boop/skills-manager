@@ -291,6 +291,24 @@ function registerIpcHandlers(): void {
       return { success: false, message: `CLI script not found: ${cliPath}`, needSudo: false }
     }
 
+    if (process.platform === 'win32') {
+      const npmBinDir = path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'npm')
+      const cmdPath = path.join(npmBinDir, 'skills.cmd')
+      try {
+        fs.mkdirSync(npmBinDir, { recursive: true })
+        fs.writeFileSync(cmdPath, `@echo off\r\nnode "${cliPath}" %*`, 'utf-8')
+        return { success: true, message: `CLI installed: ${cmdPath}`, needSudo: false }
+      } catch {
+        const fallbackPath = path.join(managerDir, 'skills.cmd')
+        try {
+          fs.writeFileSync(fallbackPath, `@echo off\r\nnode "${cliPath}" %*`, 'utf-8')
+          return { success: true, message: `CLI installed: ${fallbackPath}\n请将 ${managerDir} 添加到系统 PATH 后即可使用`, needSudo: false }
+        } catch (e2: any) {
+          return { success: false, message: `Failed: ${e2.message}`, needSudo: false }
+        }
+      }
+    }
+
     const linkPath = '/usr/local/bin/skills'
 
     // Remove existing symlink or stale file
@@ -324,6 +342,35 @@ function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('get-cli-status', () => {
+    if (process.platform === 'win32') {
+      const npmBinDir = path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'npm')
+      const cmdPath = path.join(npmBinDir, 'skills.cmd')
+      if (fs.existsSync(cmdPath)) {
+        try {
+          const content = fs.readFileSync(cmdPath, 'utf-8')
+          const match = content.match(/node\s+"([^"]+)"/)
+          const target = match ? match[1] : null
+          const valid = target ? fs.existsSync(target) : false
+          return { installed: valid, target, linkPath: cmdPath }
+        } catch {
+          return { installed: false, target: null, linkPath: cmdPath }
+        }
+      }
+      const fallbackPath = path.join(managerDir, 'skills.cmd')
+      if (fs.existsSync(fallbackPath)) {
+        try {
+          const content = fs.readFileSync(fallbackPath, 'utf-8')
+          const match = content.match(/node\s+"([^"]+)"/)
+          const target = match ? match[1] : null
+          const valid = target ? fs.existsSync(target) : false
+          return { installed: valid, target, linkPath: fallbackPath }
+        } catch {
+          return { installed: false, target: null, linkPath: fallbackPath }
+        }
+      }
+      return { installed: false, target: null, linkPath: cmdPath }
+    }
+
     const linkPath = '/usr/local/bin/skills'
     try {
       const target = fs.readlinkSync(linkPath)

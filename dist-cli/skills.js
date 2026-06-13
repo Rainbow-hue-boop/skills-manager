@@ -58,6 +58,15 @@ function launchElectron() {
         console.error('Failed to launch Skills Manager.app');
         process.exit(1);
     }
+    // Packaged Windows: CLI lives at resources/cli/ inside the install dir
+    if (process.platform === 'win32') {
+        const appDir = path_1.default.resolve(__dirname, '..', '..');
+        const exePath = path_1.default.join(appDir, 'Skills Manager.exe');
+        if (fs_1.default.existsSync(exePath)) {
+            (0, child_process_1.execSync)(`"${exePath}"`, { stdio: 'ignore' });
+            return;
+        }
+    }
     // Dev mode: launch Electron from node_modules
     const possiblePaths = [
         path_1.default.join(__dirname, '..', 'node_modules', '.bin', 'electron'),

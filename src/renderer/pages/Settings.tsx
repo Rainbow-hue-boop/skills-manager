@@ -6,6 +6,7 @@ export default function Settings() {
   const [saved, setSaved] = useState(false)
   const [managerPath, setManagerPath] = useState('')
   const [cliInstalled, setCliInstalled] = useState(false)
+  const [cliLinkPath, setCliLinkPath] = useState('/usr/local/bin/skills')
   const [cliMessage, setCliMessage] = useState('')
   const [cliLoading, setCliLoading] = useState(false)
 
@@ -15,7 +16,7 @@ export default function Settings() {
       setAutoSync(s.autoSync || false)
     })
     window.skillsApi.getManagerPath().then(setManagerPath)
-    window.skillsApi.getCliStatus().then(s => setCliInstalled(s.installed))
+    window.skillsApi.getCliStatus().then(s => { setCliInstalled(s.installed); setCliLinkPath(s.linkPath) })
   }, [])
 
   async function handleSave() {
@@ -65,7 +66,7 @@ export default function Settings() {
               borderRadius: 4,
               fontWeight: 500
             }}>
-              {cliInstalled ? '已安装 /usr/local/bin/skills' : '未安装'}
+              {cliInstalled ? `已安装 ${cliLinkPath}` : '未安装'}
             </span>
             <button
                 className="btn btn-primary"
@@ -75,7 +76,11 @@ export default function Settings() {
                   const r = await window.skillsApi.setupCli()
                   setCliLoading(false)
                   setCliMessage(r.message)
-                  if (r.success) setCliInstalled(true)
+                   if (r.success) {
+                     setCliInstalled(true)
+                     const s = await window.skillsApi.getCliStatus()
+                     setCliLinkPath(s.linkPath)
+                   }
                 }}
                 disabled={cliLoading}
                 style={{ fontSize: 12, padding: '4px 12px' }}
