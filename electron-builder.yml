@@ -8,6 +8,7 @@ extraResources:
   - from: dist-cli/
     to: cli/
 win:
+  icon: resources/icon.png
   target:
     - target: nsis
       arch: [x64]
@@ -15,6 +16,7 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
 mac:
+  icon: resources/icon.png
   target:
     - target: dmg
       arch: [arm64]

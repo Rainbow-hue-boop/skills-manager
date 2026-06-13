@@ -12,10 +12,10 @@ let cliProjectPath: string = ''
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 960,
-    height: 680,
-    minWidth: 780,
-    minHeight: 500,
+    width: 1440,
+    height: 1020,
+    minWidth: 1170,
+    minHeight: 750,
     title: 'Skills Manager',
     backgroundColor: '#0d0d0d',
     webPreferences: {
